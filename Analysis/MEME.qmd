@@ -1,0 +1,83 @@
+---
+title: "GREAT"
+author: Nathan Harmston
+date: '`r format(Sys.time(), "%d %B %Y")`'
+format:
+  html: 
+    keep-md: true
+    embed-resources: true
+    df-print: kable
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    number-sections: true
+    smooth-scroll: true
+    code-tools: true
+    code-line-numbers: true
+  gfm: 
+    df-print: kable
+    toc: true 
+    toc-depth: 3
+    number-sections: true
+---
+
+# GREAT analysis of deaf1 peaks 
+
+
+```{r}
+library(rtracklayer)
+library(BSgenome.Mmusculus.UCSC.mm10)
+
+deaf1.idr = read.delim("../peaks/deaf1-idr", header=FALSE)
+#deaf1.filtered.idr = deaf1.idr[deaf1.idr[,5]>=540,] 
+#deaf1.filtered.idr = deaf1.filtered.idr[!deaf1.filtered.idr[,1] %in% c("chr4_GL456216_random", "chr4_JH584295_random"), ] 
+ 
+deaf1.gr = GRanges(deaf1.idr[,1], IRanges(deaf1.idr$V2+1, deaf1.idr$V3), idr=deaf1.idr[,5], summit=deaf1.idr[,10])
+
+rep1 = import("../peaks/deaf1_rep1_peaks.narrowPeak")
+rep2 = import("../peaks/deaf1_rep2_peaks.narrowPeak")
+
+idr.ol1 = findOverlaps(deaf1.gr, rep1)
+idr.ol2 = findOverlaps(deaf1.gr, rep2)
+
+deaf1.gr$rep1_pvalue[queryHits(idr.ol1)] =  rep1$pValue[subjectHits(idr.ol1)]
+deaf1.gr$rep2_pvalue[queryHits(idr.ol2)] =  rep2$pValue[subjectHits(idr.ol2)]
+
+deaf1.gr$rep1_qvalue[queryHits(idr.ol1)] =  rep1$qValue[subjectHits(idr.ol1)]
+deaf1.gr$rep2_qvalue[queryHits(idr.ol2)] =  rep1$qValue[subjectHits(idr.ol2)]
+  
+sum( deaf1.gr$rep1_qvalue > -log10(0.05) & deaf1.gr$rep2_qvalue > -log10(0.05))
+
+deaf1.filtered.gr = deaf1.gr[deaf1.gr$idr >= 540]
+
+#sum( deaf1.filtered.gr$rep1_qvalue > -log10(0.01) & deaf1.filtered.gr$rep2_qvalue > -log10(0.01))
+
+deaf1.filtered.gr = deaf1.filtered.gr[!seqnames(deaf1.filtered.gr) %in% c("chr4_GL456216_random", "chr4_JH584295_random"), ] 
+
+names(deaf1.filtered.gr) = paste("peak", 1:length(deaf1.filtered.gr), sep=":")
+names(deaf1.filtered.gr) = paste("peak", 1:length(deaf1.filtered.gr), sep=":")
+
+export.bed(deaf1.filtered.gr, "../peaks/deaf1_idr.bed")
+write.csv(as.data.frame(deaf1.filtered.gr), "../peaks/deaf1_idr.csv", quote=FALSE)
+
+
+deaf1.filtered.gr$new_start = start(deaf1.filtered.gr) + deaf1.filtered.gr$summit
+
+
+deaf1.gr = GRanges(seqnames(deaf1.filtered.gr), IRanges(deaf1.filtered.gr$new_start-250, deaf1.filtered.gr$new_start+250))
+
+peak.sequences = getSeq(Mmusculus, deaf1.gr)
+names(peak.sequences) = paste("peak", 1:length(peak.sequences), sep=":")
+writeXStringSet(peak.sequences, "../peaks/deaf1_idr.fasta")
+
+```
+
+```{bash}
+
+```
+
+
+```{r}
+sessionInfo()
+```
+

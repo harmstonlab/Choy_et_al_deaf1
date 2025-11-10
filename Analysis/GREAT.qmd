@@ -1,0 +1,92 @@
+---
+title: "GREAT"
+author: Nathan Harmston
+date: '`r format(Sys.time(), "%d %B %Y")`'
+format:
+  html: 
+    keep-md: true
+    embed-resources: true
+    df-print: kable
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    number-sections: true
+    smooth-scroll: true
+    code-tools: true
+    code-line-numbers: true
+  gfm: 
+    df-print: kable
+    toc: true 
+    toc-depth: 3
+    number-sections: true
+---
+
+# GREAT analysis of deaf1 peaks 
+
+
+```{r}
+library("rGREAT")
+library(rtracklayer)
+library(ggplot2)
+library(GenomicRanges)
+
+deaf1.idr = read.delim("../peaks/deaf1-idr", header=FALSE)
+deaf1.filtered.idr = deaf1.idr[deaf1.idr[,5]>=540,] 
+
+deaf1.gr = GRanges(deaf1.filtered.idr[,1], IRanges(deaf1.filtered.idr[,2]+1, deaf1.filtered.idr[,3]))
+names(deaf1.gr) = paste("peak", 1:length(deaf1.gr), sep=":")
+names(deaf1.gr) = paste("peak", 1:length(deaf1.gr), sep=":")
+export.bed(deaf1.gr, "../peaks/deaf1_idr.bed")
+
+
+```
+
+
+```{r}
+
+great = read.delim("deaf1_greatExportAll.tsv", sep="\t", comment.char = "#", header=FALSE)
+
+colnames(great) = c("Ontology", "ID", "Desc", "BinomRank", "BinomP", 
+                    "BinomBonfP", "BinomFdrQ", "RegionFoldEnrich", 
+                    "ExpRegions", "ObsRegions", "GenomeFrac", "SetCov",
+                    "HyperRank", "HyperP", "HyperBonfP", "HyperFdrQ", 
+                    "GeneFoldEnrich", "ExpGenes", "ObsGenes", "TotalGenes",
+                    "GeneSetCov", "TermCov", "Regions", "Genes")
+
+
+great.bp = great[great$Ontology == "GO Biological Process", ]
+sum(great.bp$BinomFdrQ < 0.1)
+
+great.hgph = great[great$Ontology == "Human Phenotype", ]
+sum(great.hgph$BinomFdrQ < 0.1)
+
+great.mmph = great[great$Ontology == "Mouse Phenotype", ]
+sum(great.mmph$BinomFdrQ < 0.1)
+```
+
+
+```{r}
+ggplot(great.bp[great.bp$ObsRegions >=5, ], aes(x=log2(RegionFoldEnrich), y=-log10(BinomFdrQ), size=ObsRegions, colour=GenomeFrac )) + geom_point() + theme_bw() + geom_hline(yintercept=-log(0.05), linetype = "dashed")  + ggrepel::geom_text_repel(data=great.bp[great.bp$Desc %in% c("regulation of mitophagy", "regulation of translation"), ], aes(label = Desc), color = "black", size = 2.5, segment.color = "grey")
+```
+
+
+```{r}
+
+GO:1903146
+
+regulation of mitophagy
+
+
+
+```
+
+
+
+
+
+
+```{r}
+sessionInfo()
+```
+
+

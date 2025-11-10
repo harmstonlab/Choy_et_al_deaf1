@@ -1,0 +1,41 @@
+---
+title: "ChIPQC"
+author: "Nathan Harmston"
+date: "2024-05-14"
+output: pdf_document
+---
+
+# ChIPQC
+
+```{r}
+suppressPackageStartupMessages({
+  library(ChIPQC)
+})
+# Set 6 workers
+register(MulticoreParam(workers = 6))
+```
+
+Read in samples:
+
+```{r}
+## Load sample data
+samples <- read.csv('../meta/chipqc_metadata.csv', header = TRUE)
+head(samples)
+```
+
+
+```{r}
+## Create ChIPQC object
+chipObj <- ChIPQC(samples, annotation="mm10") 
+```
+
+
+```{r}
+## Create ChIPQC report
+ChIPQCreport(chipObj, reportName="ChIP QC report: Deaf1", reportFolder="ChIPQCreport")
+```
+
+
+```{r}
+sessionInfo()
+```

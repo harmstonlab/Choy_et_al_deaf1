@@ -1,0 +1,65 @@
+---
+title: "Mtor promoter plot"
+format: html
+editor: visual
+---
+
+## 
+
+```{r}
+library(biomaRt)
+library(GenomicRanges)
+library(Biostrings)
+library(GenomicFeatures)
+library(org.Mm.eg.db)
+
+mm.gtf.db <- makeTxDbFromGFF("~/Downloads/Mus_musculus.GRCm38.102.chr.gtf", format="gtf" )
+
+
+chr = "chr4"
+start = 148448582-1500
+end = 148448582+1500
+
+bm <- useEnsembl(
+              biomart = "ENSEMBL_MART_ENSEMBL", 
+              dataset = "mmusculus_gene_ensembl", version=102)
+biomTrack <- BiomartGeneRegionTrack(genome = "mm10", chromosome = chr, 
+                                    name = "ENSEMBL", biomart = bm,
+                                    start=start, end = end)
+plotTracks(biomTrack)
+
+biomTrack <- BiomartGeneRegionTrack(genome = "mm10", name = "ENSEMBL", 
+                                    symbol = "MTOR", biomart = bm)
+
+plotTracks(biomTrack, transcriptAnnotation = "symbol")
+```
+
+
+```{r}
+library(Gviz)
+
+axisTrack <- GenomeAxisTrack()
+
+rep1File <- "~/Downloads/deaf1_rep1_treat_pileup.bedGraph"
+rep2File <- "~/Downloads/deaf1_rep2_treat_pileup.bedGraph"
+
+dTrack1 <- DataTrack(range = rep1File, genome = "mm10", type = "l", 
+                     name = "Deaf1 Rep1", chromosome=chr, start=start, end=end)
+dTrack2 <- DataTrack(range = rep2File, genome = "mm10", type = "l", 
+                     name = "Deaf1 Rep2", chromosome=chr, start=start, end=end)
+
+aTrack <- AnnotationTrack(range = "~/Downloads/deaf1_idr.bed", genome = "mm10", type = "l", 
+                     name = "Deaf1", chromosome=chr, start=start, end=end)
+
+
+ideoTrack <- IdeogramTrack(genome = "mm10", chromosome = "chr4")
+
+plotTracks(c(ideoTrack, axisTrack, dTrack1, dTrack2, aTrack, biomTrack), chromosome = chr, from=start, to = end)
+
+
+```
+
+
+```{r}
+sessionInfo()
+```
